@@ -503,7 +503,6 @@ mjx-container svg {
         <span>📖 <span id="cardCounter">0 / 0</span></span>
         <span>✅ <span id="learnedCount">0</span></span>
         <span>🏷️ <span id="tagDisplay">Toate</span></span>
-        <span>📐 <span id="latexCount">0</span></span>
     </div>
 
     <div class="filter-section">
@@ -540,7 +539,6 @@ mjx-container svg {
             <div class="card-meta">
                 <span id="cardId">#1</span>
                 <span id="cardSource">Sinteză Teorie</span>
-                <span class="latex-badge active" id="latexIndicator">📐 LaTeX</span>
             </div>
         </div>
     </div>
@@ -1218,9 +1216,9 @@ mjx-container svg {
         cardId.textContent = `#${card.id}`;
         cardSource.textContent = 'Sinteză Teorie';
 
-        latexIndicator.style.display = 'inline';
-        latexIndicator.textContent = '📐 LaTeX';
-        latexIndicator.className = 'latex-badge active';
+        
+        
+        
 
         updateStats();
         
@@ -1239,8 +1237,7 @@ mjx-container svg {
         const tag = tagFilter.value;
         tagDisplay.textContent = tag === 'all' ? 'Toate' : tag;
 
-        const latexCards = filteredCards.filter(c => hasLatex(c.answer) || hasLatex(c.question)).length;
-        latexCount.textContent = latexCards;
+        
         
         if (filteredCards.length > 0) {
             const card = filteredCards[currentIndex];
