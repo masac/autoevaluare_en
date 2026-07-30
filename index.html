@@ -486,6 +486,28 @@ mjx-container svg {
         .quiz-answer { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #cdd8e6; font-size: 0.92rem; line-height: 1.5; color: #2c4562; }
         body.dark .quiz-answer { color: #c7d6e6; border-top-color: #2c3d54; }
         .quiz-answer.hidden { display: none; }
+
+        .srs-rate-row { display: flex; gap: 8px; margin-top: 16px; }
+        .srs-rate-btn {
+            flex: 1;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-family: inherit;
+        }
+        .srs-rate-btn .interval-preview { font-size: 0.62rem; font-weight: 500; opacity: 0.9; }
+        @media (max-width: 480px) {
+            .srs-rate-row { flex-wrap: wrap; }
+            .srs-rate-btn { min-width: 44%; }
+        }
         .quiz-missed-list { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
         .quiz-missed-item { background: #fbeeee; border-radius: 10px; padding: 8px 12px; font-size: 0.75rem; color: #6b2a2a; }
         body.dark .quiz-missed-item { background: #2a1a1a; color: #e8b8b8; }
@@ -592,6 +614,7 @@ mjx-container svg {
         <span>📖 <span id="cardCounter">0 / 0</span></span>
         <span>✅ <span id="learnedCount">0</span></span>
         <span>🏷️ <span id="tagDisplay">Toate</span></span>
+        <span>🧠 <span id="srsDueCount">0</span> de revizuit</span>
     </div>
 
     <div class="filter-section">
@@ -614,6 +637,7 @@ mjx-container svg {
         <button id="shuffleBtn" class="pill-btn">🔀 Amestecă</button>
         <button id="unlearnedBtn" class="pill-btn">📌 Doar neînvățate</button>
         <button id="quizStartBtn" class="pill-btn primary">📝 Autoevaluare</button>
+        <button id="srsStartBtn" class="pill-btn primary" style="background:#1d6b3e; border-color:#1d6b3e;">🧠 Repetiție</button>
         <button id="resetLearnedBtn" class="pill-btn">Reset învățate</button>
     </div>
 
@@ -709,6 +733,61 @@ mjx-container svg {
                 <button id="quizRetryMissedBtn" class="quiz-btn quiz-btn-secondary" style="display:none;">🔁 Reia greșelile</button>
                 <button id="quizRestartBtn" class="quiz-btn quiz-btn-secondary">↺ Test nou</button>
                 <button id="quizCloseBtn" class="quiz-btn quiz-btn-primary">Închide</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============ MODUL DE REPETIȚIE ============ -->
+<div class="quiz-overlay" id="srsOverlay" style="display:none;">
+    <div class="quiz-box" id="srsBox">
+
+        <!-- Ecran 1: setare sesiune -->
+        <div id="srsSetup">
+            <h2 style="margin:0 0 6px 0; font-size:1.15rem;">🧠 Repetiție</h2>
+            <p id="srsSetupInfo" style="margin:0 0 10px 0; font-size:0.8rem; color:#5c7089;"></p>
+            <p style="margin:0 0 18px 0; font-size:0.72rem; color:#8098b3;">Cardurile greșite revin mai des, cele știute bine revin după intervale tot mai mari — la fel ca într-un Anki clasic. Sesiunea folosește filtrele active (clasă / subiect / căutare).</p>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="srsCancelBtn" class="quiz-btn quiz-btn-secondary">Închide</button>
+                <button id="srsBeginBtn" class="quiz-btn quiz-btn-primary">Începe ▶</button>
+            </div>
+        </div>
+
+        <!-- Ecran 2: sesiune în desfășurare -->
+        <div id="srsPlay" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span id="srsProgressText" style="font-size:0.75rem; font-weight:600; color:#5c7089;"></span>
+                <span style="font-size:0.75rem; font-weight:600; color:#1d6b3e;">🧠 Repetiție</span>
+            </div>
+            <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="srsProgressFill"></div></div>
+            <div class="quiz-card">
+                <div style="display:flex; gap:6px;">
+                    <div class="card-tag" id="srsTag" style="margin-bottom:0;"></div>
+                    <div class="card-tag" id="srsGrade" style="margin-bottom:0;"></div>
+                </div>
+                <div class="quiz-question" id="srsQuestion"></div>
+                <div class="quiz-answer hidden" id="srsAnswer"></div>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:16px;" id="srsShowAnswerRow">
+                <button id="srsShowAnswerBtn" class="quiz-btn quiz-btn-primary" style="min-width:220px;">📖 Arată răspunsul</button>
+            </div>
+            <div class="srs-rate-row" id="srsRateRow" style="display:none;">
+                <button class="srs-rate-btn" id="srsAgainBtn" style="background:#a13a3a;">😵 Din nou<span class="interval-preview" id="srsAgainPrev"></span></button>
+                <button class="srs-rate-btn" id="srsHardBtn" style="background:#c07a2e;">😐 Greu<span class="interval-preview" id="srsHardPrev"></span></button>
+                <button class="srs-rate-btn" id="srsGoodBtn" style="background:#2a6e8f;">🙂 Bine<span class="interval-preview" id="srsGoodPrev"></span></button>
+                <button class="srs-rate-btn" id="srsEasyBtn" style="background:#1d6b3e;">😄 Ușor<span class="interval-preview" id="srsEasyPrev"></span></button>
+            </div>
+            <button id="srsExitBtn" style="margin-top:18px; background:none; border:none; color:#8098b3; font-size:0.7rem; cursor:pointer; text-decoration:underline;">Ieși din repetiție</button>
+        </div>
+
+        <!-- Ecran 3: sesiune încheiată -->
+        <div id="srsDone" style="display:none;">
+            <h2 style="margin:0 0 4px 0; font-size:1.15rem;">🎉 Gata pentru azi!</h2>
+            <p id="srsDoneText" style="font-size:0.85rem; color:#5c7089; text-align:center; margin:14px 0 20px;"></p>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button id="srsStudyExtraBtn" class="quiz-btn quiz-btn-secondary" style="display:none;">📚 Studiază și restul, oricum</button>
+                <button id="srsCloseBtn" class="quiz-btn quiz-btn-primary">Închide</button>
             </div>
         </div>
 
@@ -974,6 +1053,9 @@ mjx-container svg {
   { id: 'g7', grade: 6, tag: 'Geometrie plană', 
     question: 'Linii importante în triunghi: înălțimea, mediana, mediatoarea, bisectoarea.', 
     answer: 'Înălțimea: perpendiculară din vârf pe latura opusă (ortocentru $H$). Mediana: unește vârful cu mijlocul laturii opuse (centru de greutate $G$, la $\\frac{2}{3}$ de vârf). Mediatoarea: perpendiculară pe mijlocul segmentului (centru cerc circumscris $O$). Bisectoarea: împarte unghiul în 2 părți egale (centru cerc înscris $I$).' },
+  { id: 'g48', grade: 6, tag: 'Geometrie plană', 
+    question: 'Proprietatea bisectoarei și proprietatea mediatoarei.', 
+    answer: 'Bisectoarea unui unghi este locul geometric al punctelor egal depărtate de laturile unghiului. Mediatoarea unui segment este locul geometric al punctelor egal depărtate de capetele segmentului.' },
   { id: 'g8', grade: 6, tag: 'Geometrie plană', 
     question: 'Teorema liniei mijlocii în triunghi.', 
     answer: 'Linia mijlocie este paralelă cu baza și egală cu jumătate din bază.' },
@@ -983,11 +1065,17 @@ mjx-container svg {
   { id: 'g10', grade: 6, tag: 'Geometrie plană', 
     question: 'Proprietăți triunghi echilateral.', 
     answer: 'Toate laturile congruente; toate unghiurile de $60^\\circ$; orice înălțime este mediană, mediatoare, bisectoare.' },
+  { id: 'g45', grade: 7, tag: 'Geometrie plană', 
+    question: 'Aria și înălțimea triunghiului echilateral de latură $l$.', 
+    answer: '$h = \\dfrac{l\\sqrt{3}}{2}$; $A = \\dfrac{l^2\\sqrt{3}}{4}$.' },
   
   // ============ GEOMETRIE PLANĂ - TRIUNGHIUL DREPTUNGHIC ============,
   { id: 'g11', grade: [6,7], tag: 'Geometrie plană', 
     question: 'Teorema lui Pitagora.', 
     answer: '$c_1^2 + c_2^2=ip^2$ (într-un triunghi dreptunghic).' },
+  { id: 'g46', grade: 7, tag: 'Geometrie plană', 
+    question: 'Reciproca teoremei lui Pitagora.', 
+    answer: 'Dacă într-un triunghi $c_1^2 + c_2^2 = l^2$ (pătratul unei laturi este egal cu suma pătratelor celorlalte două), atunci triunghiul este dreptunghic, iar unghiul drept este opus laturii celei mai mari (celei cu pătratul cel mai mare). Se folosește pentru a demonstra că un triunghi este dreptunghic.' },
   { id: 'g12', grade: 7, tag: 'Geometrie plană', 
     question: 'Teorema înălțimii în triunghiul dreptunghic.', 
     answer: '$h = \\sqrt{p_1 \\cdot p_2}$ ($p_1,p_2$ proiecțiile catetelor pe ipotenuză).' },
@@ -1028,9 +1116,15 @@ mjx-container svg {
   { id: 'g23', grade: 7, tag: 'Geometrie plană', 
     question: 'Teorema lui Thales (și reciproca).', 
     answer: 'O paralelă dusă la una dintre laturile unui triunghi împarte celelalte două laturi (sau prelungirile acestora) în segmente proporționale. Reciproca: Dacă o dreaptă determină pe două laturi ale unui triunghi (sau pe prelungirile acestora) segmente omoloage proporționale, atunci ea este paralelă a treia latură a triunghiului.' },
+  { id: 'g44', grade: 7, tag: 'Geometrie plană', 
+    question: 'Teorema fundamentală a asemănării.', 
+    answer: 'O paralelă dusă la una dintre laturile unui triunghi formează cu celelalte două laturi (sau cu prelungirile lor) un triunghi asemenea cu triunghiul dat. Practic: dacă $MN \\parallel BC$, cu $M \\in AB$ și $N \\in AC$, atunci $\\triangle AMN \\sim \\triangle ABC$, iar $\\dfrac{AM}{AB} = \\dfrac{AN}{AC} = \\dfrac{MN}{BC}$.' },
   { id: 'g24', grade: 7, tag: 'Geometrie plană', 
     question: 'Criterii de asemănare a triunghiurilor.', 
     answer: 'U.U. (Unghi-Unghi), L.U.L. (Latura-Unghi-Latura), L.L.L. (Latura-Latura-Latura). Dacă triunghiurile sunt asemenea atunci Raportul ariilor $= k^2$ și Raportul perimetrelor $= k$.' },
+  { id: 'g49', grade: 7, tag: 'Geometrie plană', 
+    question: 'Teorema bisectoarei (interioare) într-un triunghi.', 
+    answer: 'Bisectoarea unui unghi al unui triunghi împarte latura opusă în segmente proporționale cu laturile alăturate. Ex: bisectoarea din $A$ intersectează $BC$ în $D$ $\\Rightarrow \\dfrac{DB}{DC} = \\dfrac{AB}{AC}$.' },
   { id: 'g25', grade: 7, tag: 'Geometrie plană', 
     question: 'Aria triunghiului: formula generală, cu sinus, Heron.', 
     answer: '$A = \\dfrac{b \\cdot h}{2}$; $A = \\dfrac{1}{2} \\cdot a \\cdot b \\cdot \\sin C$; Heron: $A = \\sqrt{p(p-a)(p-b)(p-c)}$, $p=\\dfrac{a+b+c}{2}$.' },
@@ -1065,6 +1159,9 @@ mjx-container svg {
   { id: 'g34', grade: 7, tag: 'Geometrie plană', 
     question: 'Unghi la centru și unghi înscris în cerc.', 
     answer: 'Unghi la centru $=$ arcul corespunzător. Unghi înscris $= \\dfrac{1}{2}$ din arcul corespunzător.' },
+  { id: 'g47', grade: 7, tag: 'Geometrie plană', 
+    question: 'Unghiul cu vârful în interiorul cercului (format de două coarde) și unghiul cu vârful în exteriorul cercului (format de două secante).', 
+    answer: 'Vârf în interior: $\\hat{u} = \\dfrac{arc_1 + arc_2}{2}$ (semisuma arcelor cuprinse între laturile unghiului și prelungirile lor). Vârf în exterior: $\\hat{u} = \\dfrac{arc_{mare} - arc_{mic}}{2}$ (semidiferența celor două arce cuprinse între laturi).' },
   { id: 'g35', grade: 7, tag: 'Geometrie plană', 
     question: 'Tangenta la cerc: proprietate.', 
     answer: 'Tangenta este perpendiculară pe rază în punctul de tangență. Teorema ciocului de cioară: dintr-un punct exterior, tangentele sunt congruente.' },
@@ -1088,6 +1185,9 @@ mjx-container svg {
   { id: 'g41', grade: 7, tag: 'Geometrie plană', 
     question: 'Apotema poligoanelor regulate: triunghi echilateral, pătrat, hexagon.', 
     answer: 'Triunghi echilateral: $a = \\frac{l\\sqrt{3}}{6}$; pătrat: $a = \\frac{l}{2}$; hexagon: $a = \\frac{l\\sqrt{3}}{2}$.' },
+  { id: 'g50', grade: 7, tag: 'Geometrie plană', 
+    question: 'Formula generală a ariei unui poligon regulat, cu perimetrul $P$ și apotema $a$.', 
+    answer: '$A = \\dfrac{P \\cdot a}{2}$ (poligonul regulat se descompune în triunghiuri isoscele congruente cu vârful în centru, având înălțimea egală cu apotema).' },
   { id: 'g42', grade: 7, tag: 'Geometrie plană', 
     question: 'Aria și perimetrul: triunghi, dreptunghi, pătrat, paralelogram.', 
     answer: 'Triunghi: $A = \\frac{bh}{2}$, $P = a+b+c$; Dreptunghi: $A = L\\cdot l$, $P = 2(L+l)$; Pătrat: $A = l^2$, $P = 4l$; Paralelogram: $A = b\\cdot h$, $P = 2(a+b)$.' },
@@ -1147,6 +1247,12 @@ mjx-container svg {
   { id: 's15', grade: 8, tag: 'Geometrie spațiu', 
     question: 'Paralelipipedul dreptunghic: aria laterală, aria totală, volum.', 
     answer: '$A_l = 2(Lh + lh)$;$A_t = 2(Ll + Lh + lh)$; $V = L \\cdot l \\cdot h$.' },
+  { id: 's23', grade: 8, tag: 'Geometrie spațiu', 
+    question: 'Diagonala cubului și a paralelipipedului dreptunghic.', 
+    answer: 'Cub (latură $l$): $d = l\\sqrt{3}$. Paralelipiped dreptunghic (dimensiuni $L, l, h$): $d = \\sqrt{L^2+l^2+h^2}$. Se obțin aplicând teorema lui Pitagora de două ori (mai întâi în bază, apoi în triunghiul format cu diagonala spațială).' },
+  { id: 's24', grade: 8, tag: 'Geometrie spațiu', 
+    question: 'Secțiunea diagonală în cub și în paralelipipedul dreptunghic: ce formă are și cum se calculează aria?', 
+    answer: 'Este un dreptunghi. În cub: laturile $l$ și $l\\sqrt{2}$ (diagonala bazei), deci $A_{sect} = l^2\\sqrt{2}$. În paralelipiped: laturile $h$ și diagonala bazei $\\sqrt{L^2+l^2}$, deci $A_{sect} = h\\sqrt{L^2+l^2}$.' },
   { id: 's16', grade: 8, tag: 'Geometrie spațiu', 
     question: 'Prisma: aria laterală, aria totală, volum.', 
     answer: '$A_l = P_b \\cdot h$; $A_t = A_l + 2A_b$; $V = A_b \\cdot h$.' },
@@ -1156,9 +1262,15 @@ mjx-container svg {
   { id: 's18', grade: 8, tag: 'Geometrie spațiu', 
     question: 'Cilindrul: aria laterală, aria totală, volum.', 
     answer: '$A_l = 2\\pi R G$ (G = generatoare = h); $A_t = 2\\pi R(R+G)$; $V = \\pi R^2 h$.' },
+  { id: 's25', grade: 8, tag: 'Geometrie spațiu', 
+    question: 'Secțiunea axială în cilindru: ce formă are și cum se calculează aria?', 
+    answer: 'Este un dreptunghi cu laturile $2R$ (diametrul bazei) și $G$ (generatoarea, egală cu înălțimea $h$). $A_{sect} = 2R \\cdot G$.' },
   { id: 's19', grade: 8, tag: 'Geometrie spațiu', 
     question: 'Conul: aria laterală, aria totală, volum.', 
     answer: '$A_l = \\pi R G$ (G = generatoare); $A_t = \\pi R(R+G)$; $V = \\dfrac{\\pi R^2 h}{3}$.' },
+  { id: 's26', grade: 8, tag: 'Geometrie spațiu', 
+    question: 'Secțiunea axială în con: ce formă are și cum se calculează aria?', 
+    answer: 'Este un triunghi isoscel cu baza $2R$ (diametrul bazei) și laturile egale cu generatoarea $G$. $A_{sect} = \\dfrac{2R \\cdot h}{2} = R \\cdot h$ ($h$ fiind înălțimea conului).' },
   { id: 's20', grade: 8, tag: 'Geometrie spațiu', 
     question: 'Sfera: aria și volum.', 
     answer: '$A = 4\\pi R^2$; $V = \\dfrac{4\\pi R^3}{3}$.' },
@@ -1212,6 +1324,7 @@ mjx-container svg {
     const cardSource = document.getElementById('cardSource');
     const cardCounter = document.getElementById('cardCounter');
     const learnedCount = document.getElementById('learnedCount');
+    const srsDueCount = document.getElementById('srsDueCount');
     const tagDisplay = document.getElementById('tagDisplay');
     const progressFill = document.getElementById('progressFill');
     const totalCardsStat = document.getElementById('totalCardsStat');
@@ -1245,6 +1358,93 @@ mjx-container svg {
         if (window.MathJax && window.MathJax.typesetPromise) {
             window.MathJax.typesetPromise([element]).catch(() => {});
         }
+    }
+
+    // ============ MODUL DE REPETIȚIE (SM-2 simplificat) ============
+    const SRS_KEY = 'anki_matematica_srs_v1';
+    const DAY_MS = 86400000;
+
+    function todayDayNum() {
+        return Math.floor(Date.now() / DAY_MS);
+    }
+
+    function loadSrsData() {
+        try {
+            const raw = localStorage.getItem(SRS_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { /* localStorage indisponibil */ }
+        return {};
+    }
+
+    let srsData = loadSrsData();
+
+    function saveSrsData() {
+        try { localStorage.setItem(SRS_KEY, JSON.stringify(srsData)); } catch (e) {}
+    }
+
+    // Card fără istoric = considerat "nou" și scadent azi, ca să intre în coadă
+    function getSrsState(id) {
+        return srsData[id] || { ef: 2.5, interval: 0, reps: 0, due: todayDayNum() };
+    }
+
+    function isCardDue(id) {
+        return getSrsState(id).due <= todayDayNum();
+    }
+
+    function computeNextSrsState(id, rating) {
+        const s = Object.assign({}, getSrsState(id));
+        switch (rating) {
+            case 'again':
+                s.reps = 0;
+                s.interval = 0;
+                s.ef = Math.max(1.3, s.ef - 0.2);
+                break;
+            case 'hard':
+                s.reps = Math.max(1, s.reps);
+                s.interval = s.interval <= 0 ? 1 : Math.max(1, Math.round(s.interval * 1.2));
+                s.ef = Math.max(1.3, s.ef - 0.15);
+                break;
+            case 'good':
+                s.reps = s.reps + 1;
+                if (s.reps === 1) s.interval = 1;
+                else if (s.reps === 2) s.interval = 6;
+                else s.interval = Math.round(s.interval * s.ef);
+                break;
+            case 'easy':
+                s.reps = s.reps + 1;
+                s.interval = s.reps <= 1 ? 4 : Math.max(1, Math.round(s.interval * s.ef * 1.3));
+                s.ef = s.ef + 0.15;
+                break;
+        }
+        s.due = todayDayNum() + Math.max(0, s.interval);
+        return s;
+    }
+
+    function formatIntervalPreview(id, rating) {
+        const days = computeNextSrsState(id, rating).interval;
+        if (days <= 0) return 'azi';
+        if (days === 1) return '1 zi';
+        if (days < 30) return days + ' zile';
+        if (days < 365) return Math.round(days / 30) + ' luni';
+        return Math.round(days / 365) + ' ani';
+    }
+
+    function rateSrsState(id, rating) {
+        srsData[id] = computeNextSrsState(id, rating);
+        saveSrsData();
+    }
+
+    function srsPool() {
+        return filteredCards.length > 0 ? filteredCards : cardsData;
+    }
+
+    function buildDueQueue(pool) {
+        return pool.filter(c => isCardDue(c.id)).sort((a, b) => getSrsState(a.id).due - getSrsState(b.id).due);
+    }
+
+    function updateSrsBadge() {
+        if (!srsDueCount) return;
+        srsDueCount.textContent = buildDueQueue(srsPool()).length;
     }
 
     function normalizeDiacritics(text) {
@@ -1335,6 +1535,7 @@ mjx-container svg {
                 learnedBtn.classList.remove('active');
             }
         }
+        updateSrsBadge();
     }
 
     function toggleAnswer() {
@@ -1773,6 +1974,145 @@ mjx-container svg {
     });
     quizOverlay.addEventListener('click', function(e) {
         if (e.target === quizOverlay) closeQuiz();
+    });
+
+    // ============ SESIUNE DE REPETIȚIE ============
+    const srsOverlay = document.getElementById('srsOverlay');
+    const srsSetup = document.getElementById('srsSetup');
+    const srsPlay = document.getElementById('srsPlay');
+    const srsDone = document.getElementById('srsDone');
+    const srsStartBtn = document.getElementById('srsStartBtn');
+    const srsCancelBtn = document.getElementById('srsCancelBtn');
+    const srsBeginBtn = document.getElementById('srsBeginBtn');
+    const srsSetupInfo = document.getElementById('srsSetupInfo');
+    const srsProgressText = document.getElementById('srsProgressText');
+    const srsProgressFill = document.getElementById('srsProgressFill');
+    const srsTag = document.getElementById('srsTag');
+    const srsGrade = document.getElementById('srsGrade');
+    const srsQuestion = document.getElementById('srsQuestion');
+    const srsAnswer = document.getElementById('srsAnswer');
+    const srsShowAnswerRow = document.getElementById('srsShowAnswerRow');
+    const srsShowAnswerBtn = document.getElementById('srsShowAnswerBtn');
+    const srsRateRow = document.getElementById('srsRateRow');
+    const srsAgainBtn = document.getElementById('srsAgainBtn');
+    const srsHardBtn = document.getElementById('srsHardBtn');
+    const srsGoodBtn = document.getElementById('srsGoodBtn');
+    const srsEasyBtn = document.getElementById('srsEasyBtn');
+    const srsAgainPrev = document.getElementById('srsAgainPrev');
+    const srsHardPrev = document.getElementById('srsHardPrev');
+    const srsGoodPrev = document.getElementById('srsGoodPrev');
+    const srsEasyPrev = document.getElementById('srsEasyPrev');
+    const srsExitBtn = document.getElementById('srsExitBtn');
+    const srsDoneText = document.getElementById('srsDoneText');
+    const srsStudyExtraBtn = document.getElementById('srsStudyExtraBtn');
+    const srsCloseBtn = document.getElementById('srsCloseBtn');
+
+    let srsQueue = [];
+    let srsIdx = 0;
+    let srsRatedCount = 0;
+
+    function openSrsSetup() {
+        const due = buildDueQueue(srsPool());
+        srsSetupInfo.textContent = due.length > 0
+            ? '📌 Ai ' + due.length + ' card(uri) de revizuit azi, din filtrul activ.'
+            : '🎉 Nimic scadent azi din filtrul activ — poți studia oricum tot setul filtrat.';
+        srsBeginBtn.textContent = due.length > 0 ? 'Începe repetiția ▶' : 'Studiază tot filtrul ▶';
+        srsSetup.style.display = 'block';
+        srsPlay.style.display = 'none';
+        srsDone.style.display = 'none';
+        srsOverlay.style.display = 'flex';
+    }
+
+    function startSrsSession() {
+        const pool = srsPool();
+        let due = buildDueQueue(pool);
+        if (due.length === 0) due = shuffleArray(pool);
+        srsQueue = due;
+        srsIdx = 0;
+        srsRatedCount = 0;
+        srsSetup.style.display = 'none';
+        srsDone.style.display = 'none';
+        srsPlay.style.display = 'block';
+        renderSrsCard();
+    }
+
+    function renderSrsCard() {
+        const card = srsQueue[srsIdx];
+        srsProgressText.textContent = 'Cardul ' + (srsIdx + 1) + '/' + srsQueue.length;
+        srsProgressFill.style.width = (srsIdx / srsQueue.length * 100) + '%';
+        srsTag.textContent = card.tag || 'General';
+        srsGrade.textContent = formatGrades(card.grade);
+        srsQuestion.textContent = card.question;
+        srsAnswer.innerHTML = card.answer;
+        srsAnswer.classList.add('hidden');
+        srsShowAnswerRow.style.display = 'flex';
+        srsRateRow.style.display = 'none';
+        renderLatex(srsQuestion);
+    }
+
+    function showSrsAnswer() {
+        srsAnswer.classList.remove('hidden');
+        renderLatex(srsAnswer);
+        srsShowAnswerRow.style.display = 'none';
+        srsRateRow.style.display = 'flex';
+        const card = srsQueue[srsIdx];
+        srsAgainPrev.textContent = formatIntervalPreview(card.id, 'again');
+        srsHardPrev.textContent = formatIntervalPreview(card.id, 'hard');
+        srsGoodPrev.textContent = formatIntervalPreview(card.id, 'good');
+        srsEasyPrev.textContent = formatIntervalPreview(card.id, 'easy');
+    }
+
+    function rateSrsCard(rating) {
+        const card = srsQueue[srsIdx];
+        rateSrsState(card.id, rating);
+        srsRatedCount++;
+        if (rating === 'again') {
+            srsQueue.push(card); // revine mai târziu în aceeași sesiune, ca la Anki
+        }
+        updateSrsBadge();
+        if (srsIdx + 1 < srsQueue.length) {
+            srsIdx++;
+            renderSrsCard();
+        } else {
+            finishSrsSession();
+        }
+    }
+
+    function finishSrsSession() {
+        srsPlay.style.display = 'none';
+        srsDone.style.display = 'block';
+        srsDoneText.textContent = '✅ Ai revizuit ' + srsRatedCount + ' card(uri) azi. Revino mâine pentru următoarea rundă!';
+        const pool = srsPool();
+        const stillDue = buildDueQueue(pool).length;
+        srsStudyExtraBtn.style.display = (stillDue === 0 && pool.length > srsRatedCount) ? 'inline-block' : 'none';
+        updateSrsBadge();
+    }
+
+    function closeSrsOverlay() {
+        srsOverlay.style.display = 'none';
+        updateSrsBadge();
+    }
+
+    srsStartBtn.addEventListener('click', openSrsSetup);
+    srsCancelBtn.addEventListener('click', closeSrsOverlay);
+    srsCloseBtn.addEventListener('click', closeSrsOverlay);
+    srsExitBtn.addEventListener('click', closeSrsOverlay);
+    srsBeginBtn.addEventListener('click', startSrsSession);
+    srsShowAnswerBtn.addEventListener('click', showSrsAnswer);
+    srsAgainBtn.addEventListener('click', function() { rateSrsCard('again'); });
+    srsHardBtn.addEventListener('click', function() { rateSrsCard('hard'); });
+    srsGoodBtn.addEventListener('click', function() { rateSrsCard('good'); });
+    srsEasyBtn.addEventListener('click', function() { rateSrsCard('easy'); });
+    srsStudyExtraBtn.addEventListener('click', function() {
+        srsQueue = shuffleArray(srsPool());
+        srsIdx = 0;
+        srsRatedCount = 0;
+        srsDone.style.display = 'none';
+        srsPlay.style.display = 'block';
+        renderSrsCard();
+    });
+    srsOverlay.addEventListener('click', function(e) {
+        if (e.target === srsOverlay) closeSrsOverlay();
     });
 
     // ============ INIȚIALIZARE ============
