@@ -598,6 +598,68 @@ mjx-container svg {
         @media (max-width: 480px) {
             .focus-exit-btn { top: 8px; right: 8px; padding: 6px 12px; font-size: 0.7rem; }
         }
+
+        /* ===== TEST GRILĂ (4 VARIANTE) ===== */
+        .mcq-options { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+        .mcq-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            background: white;
+            border: 2px solid #d6e0ec;
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: #1d3f5c;
+            cursor: pointer;
+            line-height: 1.5;
+            transition: border-color 0.15s, background 0.15s;
+            touch-action: manipulation;
+        }
+        .mcq-option .mcq-letter {
+            flex: 0 0 auto;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #e8eef7;
+            color: #1d3f5c;
+            font-weight: 700;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mcq-option .mcq-text { flex: 1; min-width: 0; overflow-x: auto; }
+        .mcq-option .mcq-mark { flex: 0 0 auto; font-weight: 800; font-size: 1rem; }
+        .mcq-option:disabled { cursor: default; }
+        .mcq-option.correct { border-color: #1d6b3e; background: #e6f4ea; }
+        .mcq-option.correct .mcq-letter { background: #1d6b3e; color: white; }
+        .mcq-option.wrong { border-color: #a13a3a; background: #fbeeee; }
+        .mcq-option.wrong .mcq-letter { background: #a13a3a; color: white; }
+        .mcq-option.dimmed { opacity: 0.55; }
+        @media (hover: hover) {
+            .mcq-option:not(:disabled):hover { border-color: #3b7bb7; background: #f3f8fe; }
+        }
+        .mcq-feedback { margin-top: 12px; font-weight: 700; font-size: 0.85rem; }
+        .mcq-feedback.ok { color: #1d6b3e; }
+        .mcq-feedback.ko { color: #a13a3a; }
+        .mcq-explain-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #5c7089; margin-bottom: 4px; }
+        .mcq-missed-answer { display: block; margin-top: 4px; color: #1d6b3e; font-weight: 600; }
+        body.dark .mcq-option { background: #131d2b; border-color: #2c3d54; color: #dbe7f3; }
+        body.dark .mcq-option .mcq-letter { background: #253549; color: #dbe7f3; }
+        body.dark .mcq-option.correct { background: #15301f; border-color: #3d8a5f; }
+        body.dark .mcq-option.correct .mcq-letter { background: #3d8a5f; }
+        body.dark .mcq-option.wrong { background: #2f1a1a; border-color: #c25555; }
+        body.dark .mcq-option.wrong .mcq-letter { background: #c25555; }
+        body.dark .mcq-feedback.ok { color: #6fcf97; }
+        body.dark .mcq-feedback.ko { color: #f08a8a; }
+        body.dark .mcq-missed-answer { color: #6fcf97; }
+        @media (hover: hover) {
+            body.dark .mcq-option:not(:disabled):hover { background: #1a2738; border-color: #4a90c9; }
+        }
     </style>
 </head>
 <body>
@@ -637,6 +699,7 @@ mjx-container svg {
         <button id="shuffleBtn" class="pill-btn">🔀 Amestecă</button>
         <button id="unlearnedBtn" class="pill-btn">📌 Doar neînvățate</button>
         <button id="quizStartBtn" class="pill-btn primary">📝 Autoevaluare</button>
+        <button id="mcqStartBtn" class="pill-btn primary" style="background:#7a3d8f; border-color:#7a3d8f;">🎯 Test grilă</button>
         <button id="srsStartBtn" class="pill-btn primary" style="background:#1d6b3e; border-color:#1d6b3e;">🧠 Repetiție</button>
         <button id="resetLearnedBtn" class="pill-btn">Reset învățate</button>
     </div>
@@ -733,6 +796,68 @@ mjx-container svg {
                 <button id="quizRetryMissedBtn" class="quiz-btn quiz-btn-secondary" style="display:none;">🔁 Reia greșelile</button>
                 <button id="quizRestartBtn" class="quiz-btn quiz-btn-secondary">↺ Test nou</button>
                 <button id="quizCloseBtn" class="quiz-btn quiz-btn-primary">Închide</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============ TEST GRILĂ (4 VARIANTE) ============ -->
+<div class="quiz-overlay" id="mcqOverlay" style="display:none;">
+    <div class="quiz-box" id="mcqBox">
+
+        <!-- Ecran 1: Setare test -->
+        <div id="mcqSetup">
+            <h2 style="margin:0 0 6px 0; font-size:1.15rem;">🎯 Test grilă</h2>
+            <p id="mcqSetupInfo" style="margin:0 0 6px 0; font-size:0.8rem; color:#5c7089;"></p>
+            <p style="margin:0 0 16px 0; font-size:0.72rem; color:#8098b3;">Fiecare întrebare are 4 variante de răspuns, dintre care una singură este corectă. Testul folosește filtrele active (clasă / subiect / căutare).</p>
+            <div id="mcqBestScore" style="font-size:0.75rem; margin-bottom:14px; display:none;"></div>
+            <label style="font-size:0.8rem; font-weight:600; display:block; margin-bottom:8px;">Câte întrebări?</label>
+            <div id="mcqCountOptions" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"></div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="mcqCancelBtn" class="quiz-btn quiz-btn-secondary">Anulează</button>
+                <button id="mcqBeginBtn" class="quiz-btn quiz-btn-primary">Start test ▶</button>
+            </div>
+        </div>
+
+        <!-- Ecran 2: Test în desfășurare -->
+        <div id="mcqPlay" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span id="mcqProgressText" style="font-size:0.75rem; font-weight:600; color:#5c7089;">Întrebarea 1/10</span>
+                <span id="mcqScoreText" style="font-size:0.75rem; font-weight:600; color:#1d6b3e;">✓ 0</span>
+            </div>
+            <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="mcqProgressFill"></div></div>
+            <div class="quiz-card">
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <div class="card-tag" id="mcqTag" style="margin-bottom:0;"></div>
+                    <div class="card-tag" id="mcqGrade" style="margin-bottom:0;"></div>
+                </div>
+                <div class="quiz-question" id="mcqQuestion"></div>
+                <div class="mcq-options" id="mcqOptions" role="group" aria-label="Variante de răspuns"></div>
+                <div class="mcq-feedback" id="mcqFeedback" aria-live="polite"></div>
+                <div class="quiz-answer hidden" id="mcqExplain"></div>
+            </div>
+            <div style="display:flex; justify-content:center; margin-top:16px;">
+                <button id="mcqNextBtn" class="quiz-btn quiz-btn-primary" style="min-width:220px; display:none;">Următoarea întrebare ▶</button>
+            </div>
+            <button id="mcqExitBtn" style="margin-top:18px; background:none; border:none; color:#8098b3; font-size:0.7rem; cursor:pointer; text-decoration:underline;">Ieși din test</button>
+        </div>
+
+        <!-- Ecran 3: Rezultate -->
+        <div id="mcqResults" style="display:none;">
+            <h2 style="margin:0 0 4px 0; font-size:1.15rem;">🏁 Rezultat test grilă</h2>
+            <div id="mcqResultScore" style="font-size:2.2rem; font-weight:800; margin:10px 0 4px 0; text-align:center;"></div>
+            <div id="mcqResultPercent" style="text-align:center; font-size:0.85rem; color:#5c7089; margin-bottom:6px;"></div>
+            <div id="mcqResultGrade" style="text-align:center; font-size:0.8rem; font-weight:600; margin-bottom:6px;"></div>
+            <div id="mcqResultBest" style="text-align:center; font-size:0.72rem; color:#1d6b3e; margin-bottom:16px; display:none;"></div>
+            <div id="mcqMissedWrap" style="display:none; margin-bottom:16px;">
+                <div style="font-size:0.75rem; font-weight:700; margin-bottom:8px; color:#a13a3a;">Greșeli de revizuit:</div>
+                <div id="mcqMissedList" class="quiz-missed-list"></div>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button id="mcqRetryMissedBtn" class="quiz-btn quiz-btn-secondary" style="display:none;">🔁 Reia greșelile</button>
+                <button id="mcqRestartBtn" class="quiz-btn quiz-btn-secondary">↺ Test nou</button>
+                <button id="mcqCloseBtn" class="quiz-btn quiz-btn-primary">Închide</button>
             </div>
         </div>
 
@@ -1283,6 +1408,318 @@ mjx-container svg {
 
     ];
 
+    // ============================================================
+    // ÎNTREBĂRI GRILĂ (4 VARIANTE) — pentru modulul "🎯 Test grilă"
+    //
+    // Fiecare intrare este legată de un card prin `id` (aceeași cheie ca în
+    // lista de mai sus), așa că filtrele de clasă / subiect / căutare se aplică
+    // automat și în testul grilă.
+    //
+    // Structura:
+    //   a1: { q: 'Textul întrebării',
+    //         c: 'Varianta CORECTĂ',
+    //         w: ['Greșită 1', 'Greșită 2', 'Greșită 3'] },
+    //
+    // Ordinea variantelor se amestecă la fiecare afișare, deci nu contează
+    // în ce ordine le scrii. După răspuns se afișează explicația din card.
+    //
+    // Dacă un card NU are intrare aici, testul generează automat o întrebare
+    // „Care este răspunsul corect?” cu variante greșite luate din alte carduri
+    // de la același subiect.
+    // ============================================================
+    const mcqData = {
+  // ---------- ALGEBRĂ ----------
+  a1:  { q: '$\\{1,2,3\\} \\cup \\{3,4,5\\}$ este egal cu:',
+         c: '$\\{1,2,3,4,5\\}$', w: ['$\\{3\\}$', '$\\{1,2\\}$', '$\\{1,2,4,5\\}$'] },
+  a2:  { q: '$\\{1,2,3\\} \\cap \\{3,4,5\\}$ este egal cu:',
+         c: '$\\{3\\}$', w: ['$\\{1,2,3,4,5\\}$', '$\\{1,2\\}$', '$\\emptyset$'] },
+  a3:  { q: '$\\{1,2,3,4\\} \\setminus \\{3,4,5\\}$ este egal cu:',
+         c: '$\\{1,2\\}$', w: ['$\\{5\\}$', '$\\{3,4\\}$', '$\\{1,2,5\\}$'] },
+  a4:  { q: 'Dacă $card(A) = 3$ și $card(B) = 4$, câte elemente are $A \\times B$?',
+         c: '$12$', w: ['$7$', '$64$', '$81$'] },
+  a5:  { q: 'Care șir de incluziuni este corect?',
+         c: '$\\mathbb{N} \\subset \\mathbb{Z} \\subset \\mathbb{Q} \\subset \\mathbb{R}$',
+         w: ['$\\mathbb{Z} \\subset \\mathbb{N} \\subset \\mathbb{Q} \\subset \\mathbb{R}$',
+             '$\\mathbb{N} \\subset \\mathbb{Q} \\subset \\mathbb{Z} \\subset \\mathbb{R}$',
+             '$\\mathbb{R} \\subset \\mathbb{Q} \\subset \\mathbb{Z} \\subset \\mathbb{N}$'] },
+  a6:  { q: 'Numărul $\\overline{abc}$ scris în baza 10 este egal cu:',
+         c: '$100a + 10b + c$', w: ['$a + b + c$', '$10a + 10b + c$', '$a \\cdot b \\cdot c$'] },
+  a7:  { q: 'Cât este $2 + 3 \\cdot 2^2$?',
+         c: '$14$', w: ['$20$', '$38$', '$64$'] },
+  a8:  { q: 'În teorema împărțirii cu rest $a = b \\cdot q + r$, restul $r$ trebuie să verifice:',
+         c: '$0 \\le r < b$', w: ['$0 \\le r \\le b$', '$r > b$', '$0 < r < q$'] },
+  a9:  { q: 'Scrierea $a \\; \\vdots \\; b$ înseamnă că:',
+         c: 'există $c \\in \\mathbb{N}$ astfel încât $a = b \\cdot c$',
+         w: ['există $c \\in \\mathbb{N}$ astfel încât $b = a \\cdot c$', '$a < b$', '$a + b$ este număr par'] },
+  a10: { q: 'Care afirmație despre divizibilitate este adevărată?',
+         c: 'Dacă $a \\vdots b$ și $b \\vdots c$, atunci $a \\vdots c$',
+         w: ['$1 \\vdots a$ pentru orice $a$', '$a \\vdots 0$ pentru orice $a$', 'Dacă $(a + c) \\vdots b$, atunci $a \\vdots b$'] },
+  a11: { q: 'Un număr este divizibil cu 4 dacă:',
+         c: 'numărul format din ultimele două cifre este divizibil cu 4',
+         w: ['ultima cifră este divizibilă cu 4', 'suma cifrelor este divizibilă cu 4', 'ultima cifră este 0 sau 4'] },
+  a12: { q: 'Care dintre numerele următoare este prim?',
+         c: '$17$', w: ['$1$', '$21$', '$27$'] },
+  a13: { q: 'Câte numere prime sunt mai mici decât 30?',
+         c: '$10$', w: ['$8$', '$9$', '$11$'] },
+  a14: { q: 'Descompunerea în factori primi a numărului $24$ este:',
+         c: '$2^3 \\cdot 3$', w: ['$2^2 \\cdot 6$', '$2 \\cdot 3 \\cdot 4$', '$2^2 \\cdot 3^2$'] },
+  a15: { q: '$\\operatorname{cmmdc}(24, 30)$ este:',
+         c: '$6$', w: ['$3$', '$12$', '$120$'] },
+  a16: { q: 'Care pereche este formată din numere prime între ele?',
+         c: '$8$ și $15$', w: ['$6$ și $9$', '$12$ și $18$', '$10$ și $25$'] },
+  a17: { q: 'Fracția $\\frac{7}{4}$ este:',
+         c: 'supraunitară', w: ['subunitară', 'echiunitară', 'negativă'] },
+  a18: { q: 'Care fracție este ireductibilă?',
+         c: '$\\frac{9}{14}$', w: ['$\\frac{6}{15}$', '$\\frac{12}{18}$', '$\\frac{21}{35}$'] },
+  a19: { q: '$0{,}25$ scris ca fracție ordinară ireductibilă este:',
+         c: '$\\frac{1}{4}$', w: ['$\\frac{25}{10}$', '$\\frac{2}{5}$', '$\\frac{1}{25}$'] },
+  a20: { q: '$1{,}(23)$ transformat în fracție ordinară este:',
+         c: '$\\frac{122}{99}$', w: ['$\\frac{123}{99}$', '$\\frac{122}{90}$', '$\\frac{123}{100}$'] },
+  a21: { q: '$1{,}2(3)$ transformat în fracție ordinară este:',
+         c: '$\\frac{111}{90}$', w: ['$\\frac{111}{99}$', '$\\frac{123}{90}$', '$\\frac{122}{99}$'] },
+  a22: { q: 'Care dintre numerele următoare este impar?',
+         c: '$37$', w: ['$0$', '$58$', '$104$'] },
+  a23: { q: 'Care comparație este corectă?',
+         c: '$\\frac{2}{3} > \\frac{3}{5}$', w: ['$\\frac{1}{3} > \\frac{1}{2}$', '$\\frac{3}{4} < \\frac{2}{3}$', '$\\frac{5}{6} < \\frac{4}{5}$'] },
+  a24: { q: 'Inversul numărului $-\\frac{2}{3}$ este:',
+         c: '$-\\frac{3}{2}$', w: ['$\\frac{2}{3}$', '$\\frac{3}{2}$', '$-\\frac{2}{3}$'] },
+  a25: { q: 'Partea întreagă $[-1{,}3]$ este egală cu:',
+         c: '$-2$', w: ['$-1$', '$0{,}7$', '$-0{,}3$'] },
+  a26: { q: 'Aproximarea prin adaos la zecimi a numărului $3{,}141$ este:',
+         c: '$3{,}2$', w: ['$3{,}1$', '$3{,}14$', '$3$'] },
+  a27: { q: 'Rotunjirea numărului $7{,}46$ la unități este:',
+         c: '$7$', w: ['$8$', '$7{,}5$', '$7{,}4$'] },
+  a28: { q: 'Dacă $\\frac{x}{4} = \\frac{6}{8}$, atunci $x$ este:',
+         c: '$3$', w: ['$2$', '$6$', '$12$'] },
+  a29: { q: 'Dacă $\\frac{a}{b} = \\frac{c}{d}$, care proporție este de asemenea adevărată?',
+         c: '$\\frac{a+b}{b} = \\frac{c+d}{d}$', w: ['$\\frac{a+b}{b} = \\frac{c+d}{c}$', '$\\frac{a}{d} = \\frac{c}{b}$', '$\\frac{a}{c} = \\frac{d}{b}$'] },
+  a30: { q: 'Numerele $a$ și $b$ sunt direct proporționale cu $2$ și $3$, iar $a + b = 20$. Atunci $a$ este:',
+         c: '$8$', w: ['$6$', '$10$', '$12$'] },
+  a31: { q: 'Numerele $a$ și $b$ sunt invers proporționale cu $2$ și $3$. Aceasta înseamnă că:',
+         c: '$2a = 3b$', w: ['$\\frac{a}{2} = \\frac{b}{3}$', '$3a = 2b$', '$a + 2 = b + 3$'] },
+  a32: { q: '3 kg de mere costă 12 lei. Cât costă 5 kg de mere?',
+         c: '20 lei', w: ['15 lei', '7,2 lei', '36 lei'] },
+  a33: { q: '4 muncitori termină o lucrare în 6 zile. În câte zile termină aceeași lucrare 3 muncitori?',
+         c: '8 zile', w: ['4,5 zile', '5 zile', '9 zile'] },
+  a34: { q: '$25\\%$ din $80$ este:',
+         c: '$20$', w: ['$25$', '$32$', '$60$'] },
+  a35: { q: '$15\\%$ dintr-un număr este $30$. Numărul este:',
+         c: '$200$', w: ['$45$', '$4{,}5$', '$450$'] },
+  a36: { q: 'Într-o clasă sunt 48 de elevi, dintre care 12 băieți. Ce procent reprezintă băieții?',
+         c: '$25\\%$', w: ['$12\\%$', '$36\\%$', '$40\\%$'] },
+  a37: { q: '$2^3 \\cdot 2^4$ este egal cu:',
+         c: '$2^7$', w: ['$2^{12}$', '$4^7$', '$4^{12}$'] },
+  a38: { q: '$5^{-2}$ este egal cu:',
+         c: '$\\frac{1}{25}$', w: ['$-25$', '$-10$', '$\\frac{1}{10}$'] },
+  a39: { q: 'Soluția inecuației $|x| < 3$ este:',
+         c: '$x \\in (-3, 3)$', w: ['$x \\in (3, \\infty)$', '$x \\in (-\\infty, -3) \\cup (3, \\infty)$', '$x \\in [0, 3)$'] },
+  a40: { q: '$2\\sqrt{3} + 5\\sqrt{3}$ este egal cu:',
+         c: '$7\\sqrt{3}$', w: ['$7\\sqrt{6}$', '$10\\sqrt{3}$', '$\\sqrt{21}$'] },
+  a41: { q: '$\\sqrt{50}$ este egal cu:',
+         c: '$5\\sqrt{2}$', w: ['$2\\sqrt{5}$', '$25\\sqrt{2}$', '$10\\sqrt{5}$'] },
+  a42: { q: 'După raționalizarea numitorului, $\\frac{6}{\\sqrt{3}}$ este egal cu:',
+         c: '$2\\sqrt{3}$', w: ['$3\\sqrt{2}$', '$6\\sqrt{3}$', '$\\frac{\\sqrt{3}}{2}$'] },
+  a43: { q: 'Intervalul $[2, 5)$ conține numerele reale $x$ pentru care:',
+         c: '$2 \\le x < 5$', w: ['$2 < x \\le 5$', '$2 < x < 5$', '$2 \\le x \\le 5$'] },
+  a44: { q: 'Mulțimea $\\{x \\in \\mathbb{R} \\mid x \\ge 4\\}$ scrisă ca interval este:',
+         c: '$[4, \\infty)$', w: ['$(4, \\infty)$', '$(-\\infty, 4]$', '$(-\\infty, 4)$'] },
+  a45: { q: '$(1, 5) \\cap (3, 7)$ este egal cu:',
+         c: '$(3, 5)$', w: ['$(1, 7)$', '$(1, 3)$', '$(5, 7)$'] },
+  a46: { q: '$(x - 3)^2$ este egal cu:',
+         c: '$x^2 - 6x + 9$', w: ['$x^2 - 9$', '$x^2 + 9$', '$x^2 - 3x + 9$'] },
+  a47: { q: 'Scoțând factorul comun, $6x^2 + 9x$ devine:',
+         c: '$3x(2x + 3)$', w: ['$3(2x^2 + 9x)$', '$x(6x + 3)$', '$3x(2x + 9)$'] },
+  a48: { q: '$x^2 - 16$ se descompune în:',
+         c: '$(x - 4)(x + 4)$', w: ['$(x - 4)^2$', '$(x - 8)(x + 8)$', '$(x - 16)(x + 1)$'] },
+  a49: { q: '$x^2 + 5x + 6$ se descompune în:',
+         c: '$(x + 2)(x + 3)$', w: ['$(x + 1)(x + 6)$', '$(x - 2)(x - 3)$', '$(x + 5)(x + 1)$'] },
+  a50: { q: 'Media geometrică a numerelor $4$ și $9$ este:',
+         c: '$6$', w: ['$6{,}5$', '$13$', '$36$'] },
+  a51: { q: 'Soluția ecuației $3x - 12 = 0$ este:',
+         c: '$x = 4$', w: ['$x = -4$', '$x = 9$', '$x = 36$'] },
+  a52: { q: 'Pentru ecuația $x^2 - 5x + 6 = 0$, discriminantul $\\Delta$ este:',
+         c: '$1$', w: ['$-1$', '$25$', '$49$'] },
+  a53: { q: 'Soluția inecuației $-2x > 6$ este:',
+         c: '$x \\in (-\\infty, -3)$', w: ['$x \\in (-3, \\infty)$', '$x \\in (3, \\infty)$', '$x \\in (-\\infty, 3)$'] },
+  a54: { q: 'Soluția sistemului $\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$ este:',
+         c: '$(3, 2)$', w: ['$(2, 3)$', '$(4, 1)$', '$(5, 0)$'] },
+  a55: { q: 'Soluția sistemului $\\begin{cases} x + 2y = 7 \\\\ 3x - 2y = 5 \\end{cases}$ este:',
+         c: '$(3, 2)$', w: ['$(2, 3)$', '$(1, 3)$', '$(3, 1)$'] },
+  a56: { q: 'Soluția sistemului de inecuații $\\begin{cases} x > 1 \\\\ x \\le 4 \\end{cases}$ este:',
+         c: '$x \\in (1, 4]$', w: ['$x \\in [1, 4)$', '$x \\in (1, 4)$', '$x \\in (-\\infty, 4]$'] },
+  a57: { q: 'Care punct aparține graficului funcției $f(x) = 2x - 1$?',
+         c: '$(3, 5)$', w: ['$(5, 3)$', '$(0, 1)$', '$(1, 2)$'] },
+  a58: { q: 'Graficul funcției $f(x) = 2x - 6$ intersectează axa $Ox$ în punctul:',
+         c: '$(3, 0)$', w: ['$(0, -6)$', '$(-3, 0)$', '$(0, 3)$'] },
+  a59: { q: 'Punctele $A$, $B$, $C$ sunt coliniare, cu $B$ între $A$ și $C$, dacă:',
+         c: '$AB + BC = AC$', w: ['$AB + AC = BC$', '$AB = BC$', '$AB \\cdot BC = AC$'] },
+  a60: { q: 'Punctele $A$, $B$, $C$ sunt coliniare dacă unghiul $\\angle ABC$ măsoară:',
+         c: '$180^\\circ$', w: ['$90^\\circ$', '$60^\\circ$', '$120^\\circ$'] },
+  a61: { q: 'Se aruncă un zar. Probabilitatea de a obține un număr par este:',
+         c: '$\\frac{1}{2}$', w: ['$\\frac{1}{6}$', '$\\frac{1}{3}$', '$\\frac{2}{3}$'] },
+  a62: { q: 'În setul de date $2, 3, 3, 5, 3, 2$, frecvența relativă a valorii $3$ este:',
+         c: '$\\frac{1}{2}$', w: ['$3$', '$\\frac{1}{3}$', '$\\frac{1}{6}$'] },
+  a63: { q: 'Mediana setului de date $1, 3, 4, 8, 10, 12$ este:',
+         c: '$6$', w: ['$4$', '$8$', '$6{,}33$'] },
+
+  // ---------- GEOMETRIE PLANĂ ----------
+  g1:  { q: '$3{,}5$ km este egal cu:',
+         c: '3500 m', w: ['350 m', '35 000 m', '35 m'] },
+  g2:  { q: '$2$ m$^2$ este egal cu:',
+         c: '200 dm$^2$', w: ['20 dm$^2$', '2000 dm$^2$', '20 000 dm$^2$'] },
+  g3:  { q: 'Un unghi de $120^\\circ$ este:',
+         c: 'obtuz', w: ['ascuțit', 'drept', 'alungit'] },
+  g4:  { q: 'Suplementul unui unghi de $65^\\circ$ măsoară:',
+         c: '$115^\\circ$', w: ['$25^\\circ$', '$65^\\circ$', '$295^\\circ$'] },
+  g5:  { q: 'Două drepte paralele tăiate de o secantă formează unghiuri alterne interne care sunt:',
+         c: 'congruente', w: ['suplementare', 'complementare', 'întotdeauna drepte'] },
+  g6:  { q: 'Un triunghi are două unghiuri de $50^\\circ$ și $70^\\circ$. Al treilea unghi măsoară:',
+         c: '$60^\\circ$', w: ['$80^\\circ$', '$120^\\circ$', '$240^\\circ$'] },
+  g7:  { q: 'Punctul de intersecție al medianelor unui triunghi se numește:',
+         c: 'centru de greutate', w: ['ortocentru', 'centrul cercului înscris', 'centrul cercului circumscris'] },
+  g48: { q: 'Orice punct de pe mediatoarea segmentului $AB$ este:',
+         c: 'egal depărtat de $A$ și de $B$', w: ['egal depărtat de laturile unui unghi', 'mai aproape de $A$ decât de $B$', 'situat pe segmentul $AB$'] },
+  g8:  { q: 'În $\\triangle ABC$, $M$ și $N$ sunt mijloacele laturilor $AB$ și $AC$, iar $BC = 14$ cm. Atunci $MN$ are:',
+         c: '7 cm', w: ['14 cm', '28 cm', '3,5 cm'] },
+  g9:  { q: 'Într-un triunghi isoscel, înălțimea corespunzătoare bazei este și:',
+         c: 'mediană, bisectoare și mediatoare', w: ['doar mediană', 'egală cu baza', 'paralelă cu baza'] },
+  g10: { q: 'Fiecare unghi al unui triunghi echilateral măsoară:',
+         c: '$60^\\circ$', w: ['$45^\\circ$', '$90^\\circ$', '$180^\\circ$'] },
+  g45: { q: 'Aria unui triunghi echilateral cu latura $l = 4$ cm este:',
+         c: '$4\\sqrt{3}$ cm$^2$', w: ['$2\\sqrt{3}$ cm$^2$', '$8\\sqrt{3}$ cm$^2$', '$16\\sqrt{3}$ cm$^2$'] },
+  g11: { q: 'Un triunghi dreptunghic are catetele de 6 cm și 8 cm. Ipotenuza are:',
+         c: '10 cm', w: ['12 cm', '14 cm', '100 cm'] },
+  g46: { q: 'Triunghiul cu laturile de 5 cm, 12 cm și 13 cm este:',
+         c: 'dreptunghic', w: ['echilateral', 'obtuzunghic', 'isoscel'] },
+  g12: { q: 'Proiecțiile catetelor pe ipotenuză într-un triunghi dreptunghic sunt 4 cm și 9 cm. Înălțimea corespunzătoare ipotenuzei are:',
+         c: '6 cm', w: ['6,5 cm', '13 cm', '36 cm'] },
+  g13: { q: 'Ipotenuza unui triunghi dreptunghic are 25 cm, iar proiecția unei catete pe ipotenuză are 9 cm. Acea catetă are:',
+         c: '15 cm', w: ['16 cm', '20 cm', '225 cm'] },
+  g14: { q: 'Catetele unui triunghi dreptunghic au 6 cm și 8 cm. Înălțimea corespunzătoare ipotenuzei are:',
+         c: '4,8 cm', w: ['5 cm', '7 cm', '24 cm'] },
+  g15: { q: 'Ipotenuza unui triunghi dreptunghic are 18 cm. Mediana corespunzătoare ipotenuzei are:',
+         c: '9 cm', w: ['6 cm', '12 cm', '18 cm'] },
+  g16: { q: 'Într-un triunghi dreptunghic cu un unghi de $30^\\circ$, ipotenuza are 12 cm. Cateta opusă unghiului de $30^\\circ$ are:',
+         c: '6 cm', w: ['4 cm', '$6\\sqrt{3}$ cm', '24 cm'] },
+  g17: { q: 'Centrul cercului circumscris unui triunghi dreptunghic se află:',
+         c: 'la mijlocul ipotenuzei', w: ['în vârful unghiului drept', 'la intersecția bisectoarelor', 'în exteriorul triunghiului'] },
+  g18: { q: 'În triunghiul dreptunghic, sinusul unui unghi ascuțit este:',
+         c: '$\\dfrac{\\text{cateta opusă}}{\\text{ipotenuză}}$',
+         w: ['$\\dfrac{\\text{cateta alăturată}}{\\text{ipotenuză}}$', '$\\dfrac{\\text{cateta opusă}}{\\text{cateta alăturată}}$', '$\\dfrac{\\text{ipotenuză}}{\\text{cateta opusă}}$'] },
+  g19: { q: '$\\cos 60^\\circ$ este egal cu:',
+         c: '$\\frac{1}{2}$', w: ['$\\frac{\\sqrt{3}}{2}$', '$\\frac{\\sqrt{2}}{2}$', '$1$'] },
+  g20: { q: '$tg\\,60^\\circ$ este egal cu:',
+         c: '$\\sqrt{3}$', w: ['$\\frac{\\sqrt{3}}{3}$', '$1$', '$\\frac{\\sqrt{3}}{2}$'] },
+  g21: { q: 'Care NU este un criteriu de congruență a triunghiurilor oarecare?',
+         c: 'U.U.U. (Unghi-Unghi-Unghi)', w: ['L.U.L. (Latură-Unghi-Latură)', 'U.L.U. (Unghi-Latură-Unghi)', 'L.L.L. (Latură-Latură-Latură)'] },
+  g22: { q: 'Care este un criteriu de congruență pentru triunghiuri dreptunghice?',
+         c: 'I.C. (Ipotenuză-Catetă)', w: ['U.U. (Unghi-Unghi)', 'U.U.U. (Unghi-Unghi-Unghi)', 'doar ipotenuzele congruente'] },
+  g23: { q: 'În $\\triangle ABC$, $MN \\parallel BC$ ($M \\in AB$, $N \\in AC$), $AM = 2$, $MB = 4$ și $AN = 3$. Atunci $NC$ este:',
+         c: '$6$', w: ['$1{,}5$', '$4$', '$8$'] },
+  g44: { q: 'În $\\triangle ABC$, $MN \\parallel BC$ ($M \\in AB$, $N \\in AC$), $AM = 3$, $AB = 9$ și $BC = 12$. Atunci $MN$ este:',
+         c: '$4$', w: ['$6$', '$9$', '$36$'] },
+  g24: { q: 'Două triunghiuri asemenea au raportul de asemănare $k = 3$. Raportul ariilor lor este:',
+         c: '$9$', w: ['$3$', '$6$', '$27$'] },
+  g49: { q: 'În $\\triangle ABC$, $AB = 6$ și $AC = 9$, iar bisectoarea din $A$ intersectează $BC$ în $D$. Raportul $\\frac{DB}{DC}$ este:',
+         c: '$\\frac{2}{3}$', w: ['$\\frac{3}{2}$', '$\\frac{1}{2}$', '$\\frac{6}{15}$'] },
+  g25: { q: 'Aria unui triunghi cu baza de 10 cm și înălțimea corespunzătoare de 6 cm este:',
+         c: '30 cm$^2$', w: ['15 cm$^2$', '16 cm$^2$', '60 cm$^2$'] },
+  g26: { q: 'Un triunghi are aria de 24 cm$^2$ și semiperimetrul de 12 cm. Raza cercului înscris este:',
+         c: '2 cm', w: ['0,5 cm', '4 cm', '288 cm'] },
+  g27: { q: 'Un patrulater convex are trei unghiuri de $80^\\circ$, $100^\\circ$ și $90^\\circ$. Al patrulea unghi măsoară:',
+         c: '$90^\\circ$', w: ['$80^\\circ$', '$100^\\circ$', '$180^\\circ$'] },
+  g28: { q: 'Ce proprietate are ORICE paralelogram?',
+         c: 'diagonalele se înjumătățesc', w: ['diagonalele sunt congruente', 'diagonalele sunt perpendiculare', 'toate unghiurile sunt drepte'] },
+  g29: { q: 'Diagonalele unui dreptunghi sunt:',
+         c: 'congruente și se înjumătățesc', w: ['întotdeauna perpendiculare', 'bisectoarele unghiurilor', 'de lungimi diferite'] },
+  g30: { q: 'Diagonalele unui romb sunt:',
+         c: 'perpendiculare', w: ['întotdeauna congruente', 'paralele', 'egale cu latura'] },
+  g31: { q: 'Care patrulater are întotdeauna diagonalele congruente ȘI perpendiculare?',
+         c: 'pătratul', w: ['rombul oarecare', 'dreptunghiul oarecare', 'paralelogramul oarecare'] },
+  g32: { q: 'Într-un trapez isoscel, diagonalele sunt:',
+         c: 'congruente', w: ['întotdeauna perpendiculare', 'paralele', 'egale cu bazele'] },
+  g33: { q: 'Un trapez are bazele de 12 cm și 8 cm. Linia mijlocie are:',
+         c: '10 cm', w: ['2 cm', '4 cm', '20 cm'] },
+  g34: { q: 'Un unghi înscris în cerc cuprinde între laturi un arc de $100^\\circ$. Unghiul măsoară:',
+         c: '$50^\\circ$', w: ['$80^\\circ$', '$100^\\circ$', '$200^\\circ$'] },
+  g47: { q: 'Două coarde se intersectează în interiorul cercului. Arcele cuprinse între laturile unghiului și prelungirile lor au $80^\\circ$ și $40^\\circ$. Unghiul măsoară:',
+         c: '$60^\\circ$', w: ['$20^\\circ$', '$40^\\circ$', '$120^\\circ$'] },
+  g35: { q: 'Tangenta la cerc într-un punct al cercului este:',
+         c: 'perpendiculară pe rază în punctul de tangență', w: ['paralelă cu raza', 'o dreaptă care trece prin centrul cercului', 'o coardă a cercului'] },
+  g36: { q: 'În același cerc, două coarde congruente:',
+         c: 'subîntind arce congruente', w: ['sunt întotdeauna paralele', 'sunt întotdeauna diametre', 'se intersectează în centru'] },
+  g37: { q: 'Aria unui disc cu raza de 5 cm este:',
+         c: '$25\\pi$ cm$^2$', w: ['$5\\pi$ cm$^2$', '$10\\pi$ cm$^2$', '$100\\pi$ cm$^2$'] },
+  g38: { q: 'Lungimea unui arc de $90^\\circ$ dintr-un cerc cu raza de 4 cm este:',
+         c: '$2\\pi$ cm', w: ['$\\pi$ cm', '$4\\pi$ cm', '$8\\pi$ cm'] },
+  g39: { q: 'Distanța de la centrul unui cerc cu $R = 5$ cm la o dreaptă este de 3 cm. Dreapta este:',
+         c: 'secantă cercului', w: ['tangentă cercului', 'exterioară cercului', 'un diametru'] },
+  g40: { q: 'Raza cercului circumscris unui hexagon regulat cu latura de 6 cm este:',
+         c: '6 cm', w: ['3 cm', '$6\\sqrt{3}$ cm', '$3\\sqrt{2}$ cm'] },
+  g41: { q: 'Apotema unui pătrat cu latura de 10 cm este:',
+         c: '5 cm', w: ['10 cm', '$5\\sqrt{2}$ cm', '$10\\sqrt{2}$ cm'] },
+  g50: { q: 'Un poligon regulat are perimetrul de 30 cm și apotema de 4 cm. Aria lui este:',
+         c: '60 cm$^2$', w: ['7,5 cm$^2$', '34 cm$^2$', '120 cm$^2$'] },
+  g42: { q: 'Un dreptunghi are lungimea de 8 cm și lățimea de 5 cm. Perimetrul lui este:',
+         c: '26 cm', w: ['13 cm', '40 cm', '80 cm'] },
+  g43: { q: 'Un romb are diagonalele de 6 cm și 10 cm. Aria lui este:',
+         c: '30 cm$^2$', w: ['15 cm$^2$', '16 cm$^2$', '60 cm$^2$'] },
+
+  // ---------- GEOMETRIE ÎN SPAȚIU ----------
+  s1:  { q: '$1$ litru este egal cu:',
+         c: '$1$ dm$^3$', w: ['$1$ m$^3$', '$1$ cm$^3$', '$100$ cm$^3$'] },
+  s2:  { q: 'O dreaptă care are un singur punct comun cu un plan este:',
+         c: 'secantă planului', w: ['inclusă în plan', 'paralelă cu planul', 'neapărat perpendiculară pe plan'] },
+  s3:  { q: 'Pentru a arăta că o dreaptă este perpendiculară pe un plan, este suficient să fie perpendiculară pe:',
+         c: 'două drepte concurente din plan', w: ['o singură dreaptă din plan', 'două drepte paralele din plan', 'o dreaptă exterioară planului'] },
+  s4:  { q: 'Teorema celor trei perpendiculare se folosește de obicei pentru a construi:',
+         c: 'distanța de la un punct exterior la o dreaptă dintr-un plan', w: ['volumul unei piramide', 'aria laterală a unui cilindru', 'lungimea unui arc de cerc'] },
+  s5:  { q: 'Conform teoremei lui Thales în spațiu, trei plane paralele determină pe două drepte secante:',
+         c: 'segmente proporționale', w: ['segmente obligatoriu congruente', 'unghiuri drepte', 'drepte paralele'] },
+  s6:  { q: 'Distanța de la punctul $P$ la planul $(ABC)$ se poate calcula cu formula:',
+         c: '$\\dfrac{3 \\cdot V_{PABC}}{A_{ABC}}$', w: ['$\\dfrac{V_{PABC}}{3 \\cdot A_{ABC}}$', '$\\dfrac{A_{ABC}}{3 \\cdot V_{PABC}}$', '$3 \\cdot V_{PABC} \\cdot A_{ABC}$'] },
+  s7:  { q: 'Distanța de la un punct la o dreaptă este lungimea:',
+         c: 'perpendicularei duse din punct pe dreaptă', w: ['oricărui segment care unește punctul cu dreapta', 'paralelei duse prin punct', 'celui mai lung segment de la punct la dreaptă'] },
+  s8:  { q: 'Distanța dintre două drepte paralele este:',
+         c: 'distanța de la un punct oarecare al unei drepte la cealaltă dreaptă', w: ['întotdeauna zero', 'lungimea oricărui segment care le unește', 'nedefinită'] },
+  s9:  { q: 'Distanța dintre două plane paralele este:',
+         c: 'distanța de la un punct oarecare al unui plan la celălalt plan', w: ['întotdeauna zero', 'lungimea oricărui segment care le unește', 'unghiul dintre ele'] },
+  s10: { q: 'Unghiul dintre o dreaptă și un plan este unghiul dintre dreaptă și:',
+         c: 'proiecția ei pe plan', w: ['o dreaptă oarecare din plan', 'perpendiculara pe plan', 'o dreaptă paralelă cu ea'] },
+  s11: { q: 'Unghiul diedru dintre două plane se obține cu ajutorul a două drepte:',
+         c: 'perpendiculare pe muchie în același punct, câte una în fiecare plan', w: ['paralele cu muchia', 'oarecare, câte una în fiecare plan', 'perpendiculare pe ambele plane'] },
+  s12: { q: 'Două plane sunt paralele dacă unul dintre ele conține:',
+         c: 'două drepte concurente paralele cu celălalt plan', w: ['o singură dreaptă paralelă cu celălalt plan', 'două drepte paralele între ele, paralele cu celălalt plan', 'o dreaptă perpendiculară pe celălalt plan'] },
+  s13: { q: 'Două plane sunt perpendiculare dacă:',
+         c: 'unul conține o dreaptă perpendiculară pe celălalt', w: ['nu au puncte comune', 'unul conține o dreaptă paralelă cu celălalt', 'au o dreaptă comună'] },
+  s14: { q: 'Volumul unui cub cu latura de 3 cm este:',
+         c: '27 cm$^3$', w: ['9 cm$^3$', '36 cm$^3$', '54 cm$^3$'] },
+  s15: { q: 'Volumul unui paralelipiped dreptunghic cu dimensiunile de 2 cm, 3 cm și 5 cm este:',
+         c: '30 cm$^3$', w: ['10 cm$^3$', '31 cm$^3$', '62 cm$^3$'] },
+  s23: { q: 'Diagonala unui cub cu latura de 4 cm are:',
+         c: '$4\\sqrt{3}$ cm', w: ['$4\\sqrt{2}$ cm', '12 cm', '16 cm'] },
+  s24: { q: 'Secțiunea diagonală a unui cub are forma unui:',
+         c: 'dreptunghi (care nu este pătrat)', w: ['pătrat', 'triunghi echilateral', 'romb'] },
+  s16: { q: 'Volumul unei prisme este:',
+         c: '$A_b \\cdot h$', w: ['$\\dfrac{A_b \\cdot h}{3}$', '$P_b \\cdot h$', '$A_l + 2A_b$'] },
+  s17: { q: 'O piramidă are aria bazei de 36 cm$^2$ și înălțimea de 5 cm. Volumul ei este:',
+         c: '60 cm$^3$', w: ['30 cm$^3$', '90 cm$^3$', '180 cm$^3$'] },
+  s18: { q: 'Volumul unui cilindru cu $R = 3$ cm și $h = 5$ cm este:',
+         c: '$45\\pi$ cm$^3$', w: ['$15\\pi$ cm$^3$', '$30\\pi$ cm$^3$', '$75\\pi$ cm$^3$'] },
+  s25: { q: 'Aria secțiunii axiale a unui cilindru cu $R = 3$ cm și $G = 10$ cm este:',
+         c: '60 cm$^2$', w: ['30 cm$^2$', '90 cm$^2$', '$30\\pi$ cm$^2$'] },
+  s19: { q: 'Volumul unui con cu $R = 3$ cm și $h = 4$ cm este:',
+         c: '$12\\pi$ cm$^3$', w: ['$15\\pi$ cm$^3$', '$24\\pi$ cm$^3$', '$36\\pi$ cm$^3$'] },
+  s26: { q: 'Secțiunea axială a unui con este:',
+         c: 'un triunghi isoscel', w: ['un dreptunghi', 'un trapez isoscel', 'un cerc'] },
+  s20: { q: 'Volumul unei sfere cu raza de 3 cm este:',
+         c: '$36\\pi$ cm$^3$', w: ['$12\\pi$ cm$^3$', '$27\\pi$ cm$^3$', '$108\\pi$ cm$^3$'] },
+  s21: { q: 'Aria laterală a trunchiului de con este:',
+         c: '$\\pi G(R + r)$', w: ['$\\pi G(R - r)$', '$2\\pi G(R + r)$', '$\\pi(R^2 + r^2)$'] },
+  s22: { q: 'Volumul trunchiului de piramidă este:',
+         c: '$\\dfrac{h}{3}(A_B + A_b + \\sqrt{A_B \\cdot A_b})$', w: ['$h(A_B + A_b)$', '$\\dfrac{h}{3}(A_B + A_b)$', '$\\dfrac{h}{2}(A_B + A_b)$'] }
+    };
+
     // cardsData folosește direct setul de bază (fără strat de editare)
     let cardsData = baseCardsData;
 
@@ -1739,6 +2176,8 @@ mjx-container svg {
 
     // ============ KEYBOARD SHORTCUTS ============
     document.addEventListener('keydown', (e) => {
+        // cât timp testul grilă e deschis, tastele îl controlează doar pe el
+        if (typeof isMcqOpen === 'function' && isMcqOpen()) { handleMcqKey(e); return; }
         if (e.key === 'ArrowRight') { e.preventDefault(); nextCard(); }
         else if (e.key === 'ArrowLeft') { e.preventDefault(); prevCard(); }
         else if (e.key === ' ' || e.key === 'Enter') {
@@ -1975,6 +2414,308 @@ mjx-container svg {
     quizOverlay.addEventListener('click', function(e) {
         if (e.target === quizOverlay) closeQuiz();
     });
+
+    // ============ TEST GRILĂ (4 VARIANTE) ============
+    const MCQ_HISTORY_KEY = 'anki_matematica_mcq_history_v1';
+    const MCQ_LETTERS = ['A', 'B', 'C', 'D'];
+
+    const mcqOverlay = document.getElementById('mcqOverlay');
+    const mcqSetup = document.getElementById('mcqSetup');
+    const mcqPlay = document.getElementById('mcqPlay');
+    const mcqResults = document.getElementById('mcqResults');
+    const mcqStartBtn = document.getElementById('mcqStartBtn');
+    const mcqCancelBtn = document.getElementById('mcqCancelBtn');
+    const mcqBeginBtn = document.getElementById('mcqBeginBtn');
+    const mcqCountOptions = document.getElementById('mcqCountOptions');
+    const mcqSetupInfo = document.getElementById('mcqSetupInfo');
+    const mcqBestScore = document.getElementById('mcqBestScore');
+    const mcqProgressText = document.getElementById('mcqProgressText');
+    const mcqScoreText = document.getElementById('mcqScoreText');
+    const mcqProgressFill = document.getElementById('mcqProgressFill');
+    const mcqTag = document.getElementById('mcqTag');
+    const mcqGrade = document.getElementById('mcqGrade');
+    const mcqQuestion = document.getElementById('mcqQuestion');
+    const mcqOptions = document.getElementById('mcqOptions');
+    const mcqFeedback = document.getElementById('mcqFeedback');
+    const mcqExplain = document.getElementById('mcqExplain');
+    const mcqNextBtn = document.getElementById('mcqNextBtn');
+    const mcqExitBtn = document.getElementById('mcqExitBtn');
+    const mcqResultScore = document.getElementById('mcqResultScore');
+    const mcqResultPercent = document.getElementById('mcqResultPercent');
+    const mcqResultGrade = document.getElementById('mcqResultGrade');
+    const mcqResultBest = document.getElementById('mcqResultBest');
+    const mcqMissedWrap = document.getElementById('mcqMissedWrap');
+    const mcqMissedList = document.getElementById('mcqMissedList');
+    const mcqRetryMissedBtn = document.getElementById('mcqRetryMissedBtn');
+    const mcqRestartBtn = document.getElementById('mcqRestartBtn');
+    const mcqCloseBtn = document.getElementById('mcqCloseBtn');
+
+    let mcqPool = [];        // întrebările testului curent: { card, q, options[4], correctIdx }
+    let mcqIndex = 0;
+    let mcqScore = 0;
+    let mcqAnswered = false;
+    let mcqMissed = [];      // { item, chosenIdx }
+
+    function isMcqOpen() {
+        return mcqOverlay.style.display !== 'none';
+    }
+
+    function loadMcqHistory() {
+        try {
+            const raw = localStorage.getItem(MCQ_HISTORY_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return {};
+    }
+
+    function saveMcqBest(scopeKey, percent) {
+        try {
+            const hist = loadMcqHistory();
+            if (hist[scopeKey] === undefined || percent > hist[scopeKey]) {
+                hist[scopeKey] = percent;
+                localStorage.setItem(MCQ_HISTORY_KEY, JSON.stringify(hist));
+            }
+        } catch (e) {}
+    }
+
+    // Construiește o întrebare grilă pentru un card: folosește întrebarea scrisă
+    // în `mcqData` sau, dacă lipsește, una generată din răspunsurile altor carduri.
+    function buildMcqItem(card) {
+        const def = mcqData[card.id];
+        let q, correct, wrong;
+        if (def && def.c && Array.isArray(def.w) && def.w.length >= 3) {
+            q = def.q || card.question;
+            correct = def.c;
+            wrong = def.w.slice(0, 3);
+        } else {
+            q = card.question + ' <br><span style="font-size:0.8rem; font-weight:500; opacity:0.75;">Alege răspunsul corect:</span>';
+            correct = card.answer;
+            let others = cardsData.filter(c => c.id !== card.id && c.tag === card.tag && c.answer !== card.answer);
+            if (others.length < 3) others = cardsData.filter(c => c.id !== card.id && c.answer !== card.answer);
+            wrong = shuffleArray(others).slice(0, 3).map(c => c.answer);
+        }
+        const options = shuffleArray([correct].concat(wrong));
+        return { card: card, q: q, options: options, correctIdx: options.indexOf(correct) };
+    }
+
+    function mcqAvailablePool() {
+        return filteredCards.length > 0 ? filteredCards : cardsData;
+    }
+
+    function openMcqSetup() {
+        const pool = mcqAvailablePool();
+        const total = pool.length;
+        mcqSetupInfo.textContent = 'Întrebări disponibile pentru filtrul activ: ' + total + '.';
+
+        const best = loadMcqHistory()[currentQuizScopeKey()];
+        if (best !== undefined) {
+            mcqBestScore.style.display = 'block';
+            mcqBestScore.innerHTML = '🏆 Recordul tău la grilă pentru acest filtru: <b>' + best + '%</b>';
+        } else {
+            mcqBestScore.style.display = 'none';
+        }
+
+        const options = [5, 10, 20, total].filter((n, idx, self) => n > 0 && n <= total && self.indexOf(n) === idx);
+        mcqCountOptions.innerHTML = '';
+        let selectedCount = options.length ? options[Math.min(1, options.length - 1)] : total;
+        options.forEach(function(n) {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-count-btn' + (n === selectedCount ? ' active' : '');
+            btn.textContent = (n === total) ? ('Toate (' + total + ')') : String(n);
+            btn.addEventListener('click', function() {
+                Array.from(mcqCountOptions.children).forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedCount = n;
+            });
+            mcqCountOptions.appendChild(btn);
+        });
+        mcqBeginBtn.onclick = function() {
+            if (total === 0) return;
+            startMcq(shuffleArray(pool).slice(0, selectedCount).map(buildMcqItem));
+        };
+
+        mcqSetup.style.display = 'block';
+        mcqPlay.style.display = 'none';
+        mcqResults.style.display = 'none';
+        mcqOverlay.style.display = 'flex';
+    }
+
+    function startMcq(items) {
+        mcqPool = items;
+        mcqIndex = 0;
+        mcqScore = 0;
+        mcqMissed = [];
+        mcqSetup.style.display = 'none';
+        mcqResults.style.display = 'none';
+        mcqPlay.style.display = 'block';
+        renderMcqQuestion();
+    }
+
+    function renderMcqQuestion() {
+        mcqAnswered = false;
+        const item = mcqPool[mcqIndex];
+        const card = item.card;
+        mcqProgressText.textContent = 'Întrebarea ' + (mcqIndex + 1) + '/' + mcqPool.length;
+        mcqScoreText.textContent = '✓ ' + mcqScore;
+        mcqProgressFill.style.width = (mcqIndex / mcqPool.length * 100) + '%';
+        mcqTag.textContent = card.tag || 'General';
+        mcqGrade.textContent = formatGrades(card.grade);
+        mcqQuestion.innerHTML = item.q;
+
+        mcqOptions.innerHTML = '';
+        item.options.forEach(function(opt, i) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mcq-option';
+            btn.dataset.idx = i;
+            btn.innerHTML = '<span class="mcq-letter">' + MCQ_LETTERS[i] + '</span>' +
+                            '<span class="mcq-text">' + opt + '</span>' +
+                            '<span class="mcq-mark"></span>';
+            btn.addEventListener('click', function() { chooseMcqOption(i); });
+            mcqOptions.appendChild(btn);
+        });
+
+        mcqFeedback.textContent = '';
+        mcqFeedback.className = 'mcq-feedback';
+        mcqExplain.innerHTML = '';
+        mcqExplain.classList.add('hidden');
+        mcqNextBtn.style.display = 'none';
+        renderLatex(mcqQuestion);
+        renderLatex(mcqOptions);
+    }
+
+    function chooseMcqOption(idx) {
+        if (mcqAnswered) return;
+        mcqAnswered = true;
+        const item = mcqPool[mcqIndex];
+        const isRight = idx === item.correctIdx;
+        const buttons = Array.from(mcqOptions.children);
+        buttons.forEach(function(btn, i) {
+            btn.disabled = true;
+            const mark = btn.querySelector('.mcq-mark');
+            if (i === item.correctIdx) {
+                btn.classList.add('correct');
+                mark.textContent = '✓';
+            } else if (i === idx) {
+                btn.classList.add('wrong');
+                mark.textContent = '✗';
+            } else {
+                btn.classList.add('dimmed');
+            }
+        });
+
+        if (isRight) {
+            mcqScore++;
+            mcqFeedback.textContent = '✓ Corect!';
+            mcqFeedback.className = 'mcq-feedback ok';
+        } else {
+            mcqMissed.push({ item: item, chosenIdx: idx });
+            mcqFeedback.textContent = '✗ Greșit — răspunsul corect este varianta ' + MCQ_LETTERS[item.correctIdx] + '.';
+            mcqFeedback.className = 'mcq-feedback ko';
+        }
+        mcqScoreText.textContent = '✓ ' + mcqScore;
+
+        // Explicația = răspunsul din cardul de teorie
+        mcqExplain.innerHTML = '<div class="mcq-explain-label">📖 Teorie</div>' + item.card.answer;
+        mcqExplain.classList.remove('hidden');
+        renderLatex(mcqExplain);
+
+        mcqNextBtn.textContent = (mcqIndex + 1 < mcqPool.length) ? 'Următoarea întrebare ▶' : 'Vezi rezultatul 🏁';
+        mcqNextBtn.style.display = 'inline-block';
+        mcqNextBtn.focus({ preventScroll: true });
+    }
+
+    function nextMcqQuestion() {
+        if (!mcqAnswered) return;
+        if (mcqIndex + 1 < mcqPool.length) {
+            mcqIndex++;
+            renderMcqQuestion();
+            mcqOverlay.querySelector('.quiz-box').scrollTop = 0;
+        } else {
+            finishMcq();
+        }
+    }
+
+    function finishMcq() {
+        mcqPlay.style.display = 'none';
+        mcqResults.style.display = 'block';
+        const total = mcqPool.length;
+        const percent = total > 0 ? Math.round((mcqScore / total) * 100) : 0;
+        mcqResultScore.textContent = mcqScore + '/' + total;
+        mcqResultPercent.textContent = percent + '% răspunsuri corecte';
+        mcqResultGrade.textContent =
+            percent >= 90 ? '🌟 Excelent!' :
+            percent >= 70 ? '👍 Foarte bine!' :
+            percent >= 50 ? '💪 Bine, mai exersează puțin.' :
+                            '📚 Recapitulează teoria și încearcă din nou.';
+
+        const scopeKey = currentQuizScopeKey();
+        const prevBest = loadMcqHistory()[scopeKey];
+        saveMcqBest(scopeKey, percent);
+        if (prevBest === undefined) {
+            mcqResultBest.style.display = 'block';
+            mcqResultBest.textContent = '🏆 Primul tău record la grilă pentru acest filtru: ' + percent + '%';
+        } else if (percent > prevBest) {
+            mcqResultBest.style.display = 'block';
+            mcqResultBest.textContent = '🎉 Record nou! (anterior: ' + prevBest + '%)';
+        } else {
+            mcqResultBest.style.display = 'none';
+        }
+
+        if (mcqMissed.length > 0) {
+            mcqMissedWrap.style.display = 'block';
+            mcqMissedList.innerHTML = '';
+            mcqMissed.forEach(function(m) {
+                const div = document.createElement('div');
+                div.className = 'quiz-missed-item';
+                div.innerHTML = m.item.q +
+                    '<span class="mcq-missed-answer">✓ ' + m.item.options[m.item.correctIdx] + '</span>';
+                mcqMissedList.appendChild(div);
+            });
+            renderLatex(mcqMissedList);
+            mcqRetryMissedBtn.style.display = 'inline-block';
+        } else {
+            mcqMissedWrap.style.display = 'none';
+            mcqRetryMissedBtn.style.display = 'none';
+        }
+    }
+
+    function closeMcq() {
+        mcqOverlay.style.display = 'none';
+    }
+
+    mcqStartBtn.addEventListener('click', openMcqSetup);
+    mcqCancelBtn.addEventListener('click', closeMcq);
+    mcqCloseBtn.addEventListener('click', closeMcq);
+    mcqExitBtn.addEventListener('click', closeMcq);
+    mcqNextBtn.addEventListener('click', nextMcqQuestion);
+    mcqRestartBtn.addEventListener('click', openMcqSetup);
+    mcqRetryMissedBtn.addEventListener('click', function() {
+        // reia aceleași întrebări greșite, cu variantele amestecate din nou
+        startMcq(shuffleArray(mcqMissed.map(m => buildMcqItem(m.item.card))));
+    });
+    mcqOverlay.addEventListener('click', function(e) {
+        if (e.target === mcqOverlay) closeMcq();
+    });
+
+    // Tastatură în testul grilă: 1–4 sau A–D aleg varianta, Enter = următoarea, Esc = închide
+    function handleMcqKey(e) {
+        if (mcqPlay.style.display === 'none') {
+            if (e.key === 'Escape') closeMcq();
+            return;
+        }
+        const k = e.key.toLowerCase();
+        const map = { '1': 0, '2': 1, '3': 2, '4': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+        if (!mcqAnswered && map.hasOwnProperty(k)) {
+            e.preventDefault();
+            chooseMcqOption(map[k]);
+        } else if (mcqAnswered && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight')) {
+            e.preventDefault();
+            nextMcqQuestion();
+        } else if (e.key === 'Escape') {
+            closeMcq();
+        }
+    }
 
     // ============ SESIUNE DE REPETIȚIE ============
     const srsOverlay = document.getElementById('srsOverlay');
