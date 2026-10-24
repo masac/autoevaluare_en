@@ -2175,9 +2175,21 @@ mjx-container svg {
     focusExitBtn.addEventListener('click', exitFocusMode);
 
     // ============ KEYBOARD SHORTCUTS ============
+    // Scurtăturile de tastatură NU se aplică atunci când utilizatorul scrie într-un
+    // câmp (ex. căutarea) sau când e deschis un test / o sesiune de repetiție.
+    function shortcutsBlocked(e) {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return true;
+        return ['quizOverlay', 'srsOverlay'].some(id => {
+            const el = document.getElementById(id);
+            return el && el.style.display !== 'none';
+        });
+    }
+
     document.addEventListener('keydown', (e) => {
         // cât timp testul grilă e deschis, tastele îl controlează doar pe el
         if (typeof isMcqOpen === 'function' && isMcqOpen()) { handleMcqKey(e); return; }
+        if (shortcutsBlocked(e)) return;
         if (e.key === 'ArrowRight') { e.preventDefault(); nextCard(); }
         else if (e.key === 'ArrowLeft') { e.preventDefault(); prevCard(); }
         else if (e.key === ' ' || e.key === 'Enter') {
@@ -2869,7 +2881,7 @@ mjx-container svg {
     updateStats();
 
     window.addEventListener('load', () => {
-        if (window.MathJax) {
+        if (window.MathJax && window.MathJax.typesetPromise) {
             window.MathJax.typesetPromise().catch(() => {});
         }
     });
